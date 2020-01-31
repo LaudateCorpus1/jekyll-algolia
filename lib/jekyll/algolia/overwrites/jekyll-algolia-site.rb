@@ -18,6 +18,11 @@ module Jekyll
       # don't need to index, then render them (converting to HTML), the finally
       # calling `push` to push to Algolia
       def process
+        algolia_pre_process
+        algolia_post_process
+      end
+
+      def algolia_pre_process
         # Default Jekyll preflight
         reset
         read
@@ -33,6 +38,10 @@ module Jekyll
         # Converting them to HTML
         render
 
+        algolia_extract_records
+      end
+
+      def algolia_post_process
         # Pushing them Algolia
         push
       end
@@ -98,7 +107,7 @@ module Jekyll
       end
 
       # Public: Extract records from every file and index them
-      def push
+      def algolia_extract_records
         records = []
         files = []
         progress_bar = ProgressBar.create(
@@ -144,7 +153,13 @@ module Jekyll
 
         Logger.verbose("I:Found #{files.length} files")
 
-        Indexer.run(records)
+        @algolia_records ||= []
+        @algolia_records += records
+      end
+
+      # Push records to index
+      def push
+        Indexer.run(@algolia_records)
       end
     end
   end
